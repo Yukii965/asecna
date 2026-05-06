@@ -111,3 +111,20 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* Suppression du style par défaut de Leaflet Tooltip */
+.leaflet-tooltip.custom-tooltip {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.leaflet-tooltip-top.custom-tooltip:before {
+  border-top-color: #334155; /* Couleur slate-700 pour la petite flèche */
+}
+
+/* Animation douce pour l'apparition */
+.leaflet-tooltip {
+  transition: opacity 0.2s ease-in-out;
+}
