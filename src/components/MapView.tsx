@@ -5,10 +5,14 @@ import {
   Circle,
   ZoomControl,
   Tooltip,
+  useMapEvents,
 } from 'react-leaflet';
+
 import React from 'react';
 import L from 'leaflet';
+
 import type { Terminal } from '../data/types';
+
 import 'leaflet/dist/leaflet.css';
 
 // --- CONFIGURATION DE L'ICÔNE ---
@@ -24,12 +28,52 @@ const DefaultIcon = L.icon({
 });
 // ------------------------------
 
+// =======================
+// MAP CLICK HANDLER
+// =======================
+const MapClickHandler = ({
+  onMapClick,
+  isAddingMode,
+}: {
+  onMapClick: (coords: [number, number]) => void;
+  isAddingMode: boolean;
+}) => {
+
+  useMapEvents({
+    click(e) {
+      if (isAddingMode) {
+        onMapClick([e.latlng.lat, e.latlng.lng]);
+      }
+    },
+  });
+
+  return null;
+};
+
+// =======================
+// PROPS
+// =======================
 interface MapViewProps {
   terminals: Terminal[];
+
   onSelectTerminal: (t: Terminal) => void;
+
+  // ✅ AJOUT
+  isAddingMode: boolean;
+
+  onMapClick: (coords: [number, number]) => void;
 }
 
-const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
+// =======================
+// COMPONENT
+// =======================
+const MapView = ({
+  terminals,
+  onSelectTerminal,
+  isAddingMode,
+  onMapClick,
+}: MapViewProps) => {
+
   const center: [number, number] = [-18.7669, 46.8691];
 
   const bounds: L.LatLngBoundsExpression = [
@@ -46,15 +90,29 @@ const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
       zoomControl={false}
       className="h-full w-full z-0 bg-slate-950"
     >
-      {/* Fond sombre style navigation aérienne */}
+      {/* =======================
+          TILE LAYER
+      ======================= */}
       <TileLayer
         attribution="&copy; CartoDB"
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
 
+      {/* =======================
+          CLICK HANDLER
+      ======================= */}
+      <MapClickHandler
+        onMapClick={onMapClick}
+        isAddingMode={isAddingMode}
+      />
+
+      {/* =======================
+          TERMINALS
+      ======================= */}
       {terminals.map((terminal) => (
         <React.Fragment key={terminal.id}>
-          {/* Zone de couverture radio */}
+
+          {/* Zone radio */}
           <Circle
             center={terminal.coordinates}
             radius={50000}
@@ -67,6 +125,7 @@ const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
             }}
           />
 
+          {/* Marker */}
           <Marker
             position={terminal.coordinates}
             icon={DefaultIcon}
@@ -74,7 +133,8 @@ const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
               click: () => onSelectTerminal(terminal),
             }}
           >
-            {/* Info-bulle */}
+
+            {/* Tooltip */}
             <Tooltip
               direction="top"
               offset={[0, -32]}
@@ -83,11 +143,13 @@ const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
               className="custom-tooltip"
             >
               <div className="bg-slate-900 text-white p-2 rounded-lg border border-slate-700 shadow-xl">
+
                 <p className="font-bold text-blue-400 text-sm">
                   {terminal.name}
                 </p>
 
                 <div className="flex gap-2 mt-1">
+
                   <span className="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">
                     ID: {terminal.id}
                   </span>
@@ -95,6 +157,7 @@ const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
                   <span className="text-[10px] bg-green-500/20 px-1.5 py-0.5 rounded text-green-400">
                     VHF OK
                   </span>
+
                 </div>
               </div>
             </Tooltip>
@@ -102,7 +165,9 @@ const MapView = ({ terminals, onSelectTerminal }: MapViewProps) => {
         </React.Fragment>
       ))}
 
-      {/* Zoom en bas à droite */}
+      {/* =======================
+          ZOOM CONTROL
+      ======================= */}
       <ZoomControl position="bottomright" />
     </MapContainer>
   );

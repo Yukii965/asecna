@@ -34,31 +34,66 @@ const Login = ({ onLogin }: LoginProps) => {
   const [role, setRole] = useState<'admin' | 'client'>('client');
   const [adminKey, setAdminKey] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (isRegistering) {
+  //     if (password !== confirmPassword) {
+  //       alert('Les mots de passe ne correspondent pas !');
+  //       return;
+  //     }
+
+  //     if (role === 'admin' && adminKey !== ADMIN_SECRET_KEY) {
+  //       alert('Code de sécurité Admin incorrect. Inscription refusée.');
+  //       return;
+  //     }
+
+  //     alert(`Compte ${role} créé avec succès ! Connectez-vous maintenant.`);
+
+  //     setIsRegistering(false);
+  //     setConfirmPassword('');
+  //     setAdminKey('');
+  //   } else {
+  //     if (username && password) {
+  //       onLogin(username, role);
+  //     }
+  //   }
+  // };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const endpoint = isRegistering ? 'register' : 'login';
+  const body = isRegistering 
+    ? { username, password, role, admin_key: adminKey }
+    : { username, password };
+
+  try {
+    const response = await fetch(`http://localhost:8000/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.detail || "Une erreur est survenue");
+      return;
+    }
 
     if (isRegistering) {
-      if (password !== confirmPassword) {
-        alert('Les mots de passe ne correspondent pas !');
-        return;
-      }
-
-      if (role === 'admin' && adminKey !== ADMIN_SECRET_KEY) {
-        alert('Code de sécurité Admin incorrect. Inscription refusée.');
-        return;
-      }
-
-      alert(`Compte ${role} créé avec succès ! Connectez-vous maintenant.`);
-
+      alert("Inscription réussie !");
       setIsRegistering(false);
-      setConfirmPassword('');
-      setAdminKey('');
     } else {
-      if (username && password) {
-        onLogin(username, role);
-      }
+      // Connexion réussie
+      // On stocke le token si besoin ou on passe les infos au parent
+      onLogin(data.username, data.role);
     }
-  };
+  } catch (error) {
+    alert("Impossible de contacter le serveur.");
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] p-4">
